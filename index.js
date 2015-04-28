@@ -14,28 +14,29 @@ function init() {
   var context = getAudioContext();
   var options = {'audio': true, 'video': false};
 
-  navigator.getMedia(options, function(stream) {
-    console.log("> Stream URL:", URL.createObjectURL(stream));
-    var mic = context.createMediaStreamSource(stream);
-    var filter = context.createDelay();
+  navigator.getMedia(options,
+    function streamOk(stream) {
+      var mic = context.createMediaStreamSource(stream);
+      var filter = context.createDelay(5.0);
 
-    filter.delayTime.value = 0.25;
+      mic.connect(filter);
+      filter.connect(context.destination);
 
-    mic.connect(filter);
-    filter.connect(context.destination);
+      // Handle slider
+      var delay  = document.getElementById('delay');
+      var slider = document.getElementById('slider');
+      
+      slider.onchange = function(e) {
+        filter.delayTime.value = slider.value;
+        delay.innerHTML = slider.value;
+      };
 
-    // Handle slider
-    var delay  = document.getElementById('delay');
-    var slider = document.getElementById('slider');
-    
-    slider.onchange = function(e) {
-      filter.delayTime.value = slider.value;
-      delay.innerHTML = slider.value;
+      // Dispatch one change to set the current delay:
+      slider.onchange(slider);
+    },
+
+    function errorHandler(err) {
+      console.log('> ERROR ', err.stack || String(err));
     }
-  }, handleError);
-
-  var handleError = function() {
-    console.log('> ERROR ', arguments);
-  }
-
+  );
 }
